@@ -6,8 +6,8 @@
 #include <string>
 
 #include "cmd_def.h"
-#include "multicast_client.h"
 #include "openbci_gui_helpers.h"
+#include "socket_client.h"
 #include "uart.h"
 
 #ifdef _WIN32
@@ -148,15 +148,15 @@ int scan_for_ganglions (char *serial_port, int timeout_sec, char *output_json, i
 
 int scan_for_wifi (char *device_info, int *len)
 {
-    MultiCastClient socket ("239.255.255.250", 1900);
-    if (socket.init () != (int)MultiCastReturnCodes::STATUS_OK)
+    SocketClient socket ("239.255.255.250", 1900, (int)SocketType::UDP);
+    if (socket.connect () != (int)SocketReturnCodes::STATUS_OK)
     {
         return (int)GanglionDetails::GanglionScanExitCodes::PORT_OPEN_ERROR;
     }
 
-    char *search = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: "
-                   "ssdp:discover\r\nST: urn:schemas-upnp-org:device:Basic:1\r\n\r\n";
-    int res = socket.send ((void *)search, strlen (search));
+    const char *search = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: "
+                         "ssdp:discover\r\nST: urn:schemas-upnp-org:device:Basic:1\r\n\r\n";
+    int res = socket.send (search, strlen (search));
     if (res == -1)
     {
         socket.close ();
